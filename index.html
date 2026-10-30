@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Universal Roblox Story Script Generator: a ready-to-copy AI prompt for writing Roblox animation video scripts.">
+<title>Roblox Story Prompt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:auto}
+
+/* Layout: single centered column on a cinematic dark ground — slow drifting light, film grain, a timecode bar over the prompt like an editing timeline. Deliberately single dark theme. */
+:root{
+  --ground:#0e1014;
+  --ground-2:#14171d;
+  --panel:rgba(20,23,29,.78);
+  --ink:#eceae4;
+  --muted:#8f949e;
+  --accent:#e2b36b;
+  --accent-deep:#b98a45;
+  --line:rgba(236,234,228,.10);
+  --f-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html{background:var(--ground)}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16px;min-height:100%}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.grain{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.wrap{
+  position:relative;z-index:1;max-width:800px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:56px 120px;
+  display:flex;flex-direction:column;gap:24px;
+}
+.eyebrow{
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--accent)}
+h1{
+  font-family:var(--f-display);font-weight:700;
+  font-size:clamp(36px,7.2vw,68px);line-height:.98;letter-spacing:-.025em;margin:0;text-wrap:balance;
+}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:0;color:var(--muted);font-size:17px;line-height:1.6;max-width:58ch}
+.actions{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.copy{
+  font:inherit;font-weight:600;font-size:16px;letter-spacing:.01em;
+  color:#16130d;background:var(--accent);
+  border:0;border-radius:999px;cursor:pointer;padding:14px 26px;
+  display:inline-flex;align-items:center;gap:10px;
+  box-shadow:0 10px 30px rgba(226,179,107,.18);
+  transition:background .2s, transform .12s;
+}
+.copy:hover{background:#ecc07e}
+.copy:active{transform:scale(.97)}
+.copy:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.copy.done{background:var(--ink)}
+.copy svg{width:18px;height:18px;flex:none}
+.meta{color:var(--muted);font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 30px 80px rgba(0,0,0,.45);min-width:0;overflow:hidden;
+}
+.panel-head{
+  display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);
+  font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;
+}
+.rec{width:8px;height:8px;border-radius:50%;background:#d9534f;box-shadow:0 0 10px rgba(217,83,79,.7);flex:none}
+.panel-head .tc{margin-left:auto;color:var(--ink)}
+.ticks{height:10px;border-bottom:1px solid var(--line);
+  background-image:repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px 12px),repeating-linear-gradient(to right,rgba(236,234,228,.22) 0 1px,transparent 1px 60px);
+  background-size:auto 5px,auto 10px;background-repeat:repeat-x;background-position:0 100%,0 100%}
+pre#prompt{
+  margin:0;padding:22px 20px 28px;
+  font-family:var(--f-mono);font-size:14px;line-height:1.7;color:var(--ink);
+  white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text;
+}
+pre#prompt::selection{background:var(--accent);color:#16130d}
+.foot{color:var(--muted);font-size:13px;text-align:center}
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;
+  padding:14px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:linear-gradient(to top,rgba(14,16,20,.96),rgba(14,16,20,0));
+  transition:opacity .25s, transform .25s;
+}
+.dock.hide{opacity:0;transform:translateY(20px);pointer-events:none}
+.toast{
+  position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));z-index:6;
+  transform:translate(-50%,-16px);opacity:0;
+  background:var(--ink);color:var(--ground);font-weight:600;font-size:14px;
+  padding:10px 16px;border-radius:999px;transition:opacity .2s, transform .2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.copy,.dock,.toast{transition:none}}
+</style>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="wrap">
+  <div class="eyebrow">Course material · AI prompt</div>
+  <h1>Universal Roblox Story <em>Script Generator</em></h1>
+  <p class="lede">Copy the full prompt with one click, paste it into your AI assistant, then add your own example scripts at the end.</p>
+  <div class="actions">
+    <button class="copy" id="copyTop" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+      <span>Copy prompt</span>
+    </button>
+    <span class="meta" id="meta"></span>
+  </div>
+
+  <section class="panel" aria-label="Prompt text">
+    <div class="panel-head"><span class="rec"></span><span>PROMPT.TXT</span><span class="tc" id="tc">00:00:00:00</span></div>
+    <div class="ticks" aria-hidden="true"></div>
+<pre id="prompt">UNIVERSAL ROBLOX STORY SCRIPT GENERATOR
+
+You are an expert YouTube storyteller and scriptwriter specializing in engaging Roblox animation videos.
+
+Your job is to create highly entertaining, original stories that capture attention, keep viewers watching, and deliver satisfying endings.
+
+1. STORY LENGTH
+
+* Always follow the duration I request.
+* I may ask for 15 seconds, 30 seconds, 1 minute, 5 minutes, 10 minutes, or any other length.
+* Adapt the story’s pacing, dialogue, number of events, and level of detail to the requested duration.
+* Never assume a fixed video length.
+* If I don’t specify a duration, ask me.
+
+2. WRITING STYLE
+
+* Use natural, simple, conversational English.
+* Write in first person when appropriate.
+* Use engaging dialogue between characters.
+* Make sentences sound natural when spoken aloud.
+* Keep the pacing appropriate for the requested format.
+* Avoid unnecessary descriptions and complicated vocabulary.
+* Do not use excessive American or Gen Z slang.
+
+3. STORY QUALITY
+
+Every story must have:
+
+* An interesting premise that makes people want to keep watching.
+* A strong opening hook.
+* A clear storyline with logical events.
+* Interesting characters and interactions.
+* Escalation: the situation should become more interesting as the story progresses.
+* Surprises, funny moments, conflicts, or unexpected developments when appropriate.
+* A satisfying, memorable ending.
+
+Never create stories that feel like a collection of random events. Every scene and interaction should contribute to the story.
+
+4. RETENTION
+
+* Make the viewer curious about what happens next.
+* Introduce new developments throughout the story.
+* Avoid repetitive dialogue and unnecessary filler.
+* Keep the viewer interested until the ending.
+* Adapt retention techniques to the requested video length.
+
+5. ANIMATION LIMITATIONS
+
+My Roblox animations have limited capabilities:
+
+* Characters cannot hold or interact with objects.
+* Avoid phones, weapons, money, papers, photographs, food, books, signs, and similar props.
+* Prefer simple character movements: walking, running, sitting, standing, entering, leaving, looking, and reacting.
+* Use simple locations such as houses, schools, shops, streets, offices, restaurants, and gyms.
+* Keep the story visually understandable without complicated animations or effects.
+
+6. ORIGINALITY
+
+* Create original premises and storylines.
+* Do not copy the examples I provide.
+* Do not repeatedly use the same characters, settings, conflicts, or endings.
+* Explore different genres and situations: comedy, drama, horror, mystery, suspense, absurd stories, social experiments, school, work, relationships, businesses, and more.
+* Follow the genre and direction I request.
+* Do not force jokes, twists, or horror elements into stories that don’t need them.
+
+7. ENDINGS
+
+* Make endings feel earned and connected to the storyline.
+* Use unexpected twists, punchlines, emotional payoffs, or cliffhangers when appropriate.
+* Avoid predictable or meaningless endings.
+
+8. MY INSTRUCTIONS
+
+Always follow my specific instructions, including:
+
+* Requested duration.
+* Genre and tone.
+* Topic or premise.
+* Number of characters.
+* Language.
+* Story structure.
+* Any animation limitations or additional requirements.
+
+If important information is missing, ask only what is necessary.
+
+9. OUTPUT FORMAT
+
+Unless I request something different:
+
+* Give me a title.
+* Write the complete script.
+* Use character names before dialogue when multiple characters speak.
+* Do not include explanations, analysis, or unnecessary notes.
+* Do not include scene directions unless I ask for them.
+
+If I ask for story ideas, give me ideas only.
+If I choose one, write the complete script.
+If I say “another”, create a completely new story with a different premise.
+
+10. REFERENCE EXAMPLES
+
+I will provide example scripts below. Study them to understand the storytelling quality, pacing, humor, dialogue, structure, and style I like.
+
+Use them as inspiration, not templates. Never copy their exact plots or dialogue.
+
+[PASTE YOUR EXAMPLE SCRIPTS HERE]</pre>
+  </section>
+  <p class="foot">Tip: replace the last line with 2–3 of your best scripts for the strongest results.</p>
+</main>
+
+<div class="dock hide" id="dock">
+  <button class="copy" id="copyDock" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+    <span>Copy prompt</span>
+  </button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var pre=document.getElementById('prompt');
+  var text=pre.textContent;
+  var words=text.trim().split(/\s+/).length;
+  document.getElementById('meta').textContent=words+' words · '+text.length.toLocaleString('en-US')+' characters';
+
+  var toast=document.getElementById('toast'),tt;
+  function say(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('show')},2200);}
+  function selectAll(){var r=document.createRange();r.selectNodeContents(pre);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+  function mark(btn){var l=btn.querySelector('span');btn.classList.add('done');l.textContent='Copied';setTimeout(function(){btn.classList.remove('done');l.textContent='Copy prompt'},1800);}
+  function copy(e){
+    var btn=e.currentTarget;
+    function ok(){mark(btn);say('Prompt copied to clipboard');}
+    function fail(){
+      selectAll();var done=false;try{done=document.execCommand('copy')}catch(err){}
+      if(done)ok();else say('Text selected. Press Copy to finish.');
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(ok,fail);else fail();
+  }
+  document.getElementById('copyTop').addEventListener('click',copy);
+  document.getElementById('copyDock').addEventListener('click',copy);
+
+  var top=document.getElementById('copyTop'),dock=document.getElementById('dock');
+  if('IntersectionObserver' in window){new IntersectionObserver(function(en){dock.classList.toggle('hide',en[0].isIntersecting);}).observe(top);}
+
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Timecode (HH:MM:SS:FF at 30fps)
+  var tc=document.getElementById('tc'),t0=performance.now();
+  function pad(n){return n<10?'0'+n:''+n}
+  function tick(now){
+    var f=Math.floor((now-t0)/1000*30),ff=f%30,s=Math.floor(f/30);
+    tc.textContent=pad(Math.floor(s/3600))+':'+pad(Math.floor(s/60)%60)+':'+pad(s%60)+':'+pad(ff);
+    requestAnimationFrame(tick);
+  }
+  if(!reduce)requestAnimationFrame(tick);
+
+  // Background: slow drifting light fields
+  var cv=document.getElementById('bg'),ctx=cv.getContext('2d'),W,H;
+  var lights=[
+    {c:'226,179,107',a:.20,r:.55,sx:.00011,sy:.00008,px:.2,py:.15,ox:0,oy:1.3},
+    {c:'70,120,140',a:.22,r:.65,sx:.00007,sy:.0001,px:.85,py:.35,ox:2.1,oy:.4},
+    {c:'120,70,90',a:.14,r:.5,sx:.00009,sy:.00006,px:.5,py:.9,ox:4.2,oy:2.6}
+  ];
+  function resize(){
+    var d=Math.min(window.devicePixelRatio||1,1.5);
+    W=window.innerWidth;H=window.innerHeight;
+    cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);
+  }
+  function draw(t){
+    ctx.fillStyle='#0e1014';ctx.fillRect(0,0,W,H);
+    var m=Math.max(W,H);
+    lights.forEach(function(l){
+      var x=(l.px+Math.sin(t*l.sx+l.ox)*.18)*W, y=(l.py+Math.cos(t*l.sy+l.oy)*.15)*H, r=l.r*m;
+      var g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,'rgba('+l.c+','+l.a+')');g.addColorStop(1,'rgba('+l.c+',0)');
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    });
+    // faint horizontal scan lines drifting
+    ctx.strokeStyle='rgba(236,234,228,0.035)';ctx.lineWidth=1;
+    var off=(t*0.01)%48;
+    for(var y=-48+off;y<H;y+=48){ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke();}
+    if(!reduce)requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',function(){resize();if(reduce)draw(0);});
+  resize();requestAnimationFrame(draw);
+})();
+</script>
+
+</body>
+</html>
